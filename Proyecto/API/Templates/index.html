@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReportaYA - Sistema Inteligente de Infraestructura Pública</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {# Agrega un icono de favorito (favicon) si tienes uno #}
+    {# <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/x-icon"> #}
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo">R</div>
+                    <div>
+                        <div class="brand-name">ReportaYA</div>
+                        <div class="brand-slogan">Tu ciudad, tu voz, tu cambio</div>
+                    </div>
+                </div>
+
+                <nav>
+                    <ul>
+                        {# Asegúrate de que el enlace de inicio siempre exista #}
+                        <li><a href="{{ url_for('index') }}">Inicio</a></li> 
+                        <li><a href="{{ url_for('reportar') }}">Reportar</a></li>
+                        <li><a href="{{ url_for('reportes_mapa') }}">Seguimiento</a></li>
+                        
+                        {# AÑADE ESTA LÍNEA PARA EL ENLACE A LAS INSTRUCCIONES #}
+                        <li><a href="{{ url_for('instructions') }}">Instrucciones</a></li> 
+
+                        {% if current_user.is_authenticated %}
+                            {# Contenedor para la imagen de perfil y el dropdown #}
+                            <li class="nav-profile-dropdown">
+                                <a href="#" class="nav-profile-link" id="profileDropdownToggle">
+                                    <div class="nav-profile-picture-container">
+                                        {# Muestra la imagen de perfil del usuario o una por defecto #}
+                                        <img src="{{ url_for('static', filename=current_user.profile_image_url) if current_user.profile_image_url else url_for('static', filename='img/default_profile.png') }}" alt="Foto de Perfil" class="nav-profile-picture">
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu" id="profileDropdownMenu">
+                                    <li><a href="{{ url_for('perfil') }}">Mi perfil</a></li>
+                                    <li><a href="#">Mis reportes</a></li> {# Placeholder para futura ruta de reportes del usuario #}
+                                    <li><a href="{{ url_for('logout') }}">Cerrar Sesión</a></li>
+                                </ul>
+                            </li>
+                        {% else %}
+                            <li><a href="{{ url_for('login') }}">Iniciar Sesion</a></li>
+                            <li><a href="{{ url_for('register') }}">Registrarse</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            {# Mensajes Flash #}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <ul class="flash-messages">
+                        {% for category, message in messages %}
+                            <li class="{{ category }}">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+
+            <div class="hero-section">
+                <h2 class="hero-title">Sistema Inteligente de Reporte de Infraestructura Pública</h2>
+                <p class="hero-subtitle">Conectando ciudadanos con autoridades municipales</p>
+                <p class="hero-description">
+                    ReportaYA permite a los ciudadanos reportar problemas de infraestructura pública de manera rápida y
+                    eficiente. Tu reporte hace la diferencia.
+                </p>
+
+                <a href="{{ url_for('reportar') }}" class="cta-button">REPORTAR AHORA</a>
+            </div>
+
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3 class="feature-title">Fácil de Usar</h3>
+                    <p class="feature-description">
+                        Interfaz simple para reportar problemas en segundos.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📍</div>
+                    <h3 class="feature-title">Geolocalización</h3>
+                    <p class="feature-description">
+                        Ubicación precisa para respuesta rápida.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔔</div>
+                    <h3 class="feature-title">Seguimiento</h3>
+                    <p class="feature-description">
+                        Notificaciones del estado de tus reportes.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            {# Asegúrate de que 'now' se pase desde la ruta de Flask #}
+            <p>&copy; {{ now.year if now else '2023' }} ReportaYA. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleButton = document.getElementById('profileDropdownToggle');
+            const dropdownMenu = document.getElementById('profileDropdownMenu');
+
+            if (toggleButton && dropdownMenu) {
+                toggleButton.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    dropdownMenu.classList.toggle('show');
+                });
+
+                window.addEventListener('click', function(event) {
+                    if (!toggleButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                        dropdownMenu.classList.remove('show');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

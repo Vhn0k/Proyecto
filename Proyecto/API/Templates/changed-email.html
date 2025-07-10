@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cambiar Correo - ReportaYA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo">R</div>
+                    <div>
+                        <div class="brand-name">ReportaYA</div>
+                        <div class="brand-slogan">Tu ciudad, tu voz, tu cambio</div>
+                    </div>
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="{{ url_for('index') }}">Inicio</a></li>
+                        {# Contenedor para la imagen de perfil y el dropdown #}
+                        <li class="nav-profile-dropdown">
+                            <a href="#" class="nav-profile-link" id="profileDropdownToggle">
+                                <div class="nav-profile-picture-container">
+                                    {# Muestra la imagen de perfil del usuario o una por defecto #}
+                                    <img src="{{ url_for('static', filename=current_user.profile_image_url) if current_user.profile_image_url else url_for('static', filename='img/default_profile.png') }}" alt="Foto de Perfil" class="nav-profile-picture">
+                                </div>
+                            </a>
+                            <ul class="dropdown-menu" id="profileDropdownMenu">
+                                <li><a href="{{ url_for('perfil') }}">Mi perfil</a></li>
+                                <li><a href="#">Mis reportes</a></li> {# Placeholder para futura ruta de reportes del usuario #}
+                                <li><a href="{{ url_for('logout') }}">Cerrar Sesión</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <ul class="flash-messages">
+                        {% for category, message in messages %}
+                            <li class="{{ category }}">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+
+            <div class="form-container">
+                <h2>Cambiar Correo Electrónico</h2>
+                <form method="POST" action="{{ url_for('change_email') }}">
+                    <label for="new_email">Nuevo Correo Electrónico:</label>
+                    <input type="email" id="new_email" name="new_email" value="{{ current_user.email }}" required>
+
+                    <label for="password">Confirma tu Contraseña:</label>
+                    <input type="password" id="password" name="password" required>
+
+                    <button type="submit">Actualizar Correo</button>
+                </form>
+                <div class="links">
+                    <p><a href="{{ url_for('perfil') }}">Volver al Perfil</a></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleButton = document.getElementById('profileDropdownToggle');
+            const dropdownMenu = document.getElementById('profileDropdownMenu');
+
+            if (toggleButton && dropdownMenu) {
+                toggleButton.addEventListener('click', function(event) {
+                    event.preventDefault(); 
+                    dropdownMenu.classList.toggle('show');
+                });
+
+                window.addEventListener('click', function(event) {
+                    if (!toggleButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                        dropdownMenu.classList.remove('show');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

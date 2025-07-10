@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instrucciones de Uso - ReportaYA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {# No se necesitan estilos inline aquí, los moveremos a style.css #}
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo">R</div>
+                    <div>
+                        <div class="brand-name">ReportaYA</div>
+                        <div class="brand-slogan">Tu ciudad, tu voz, tu cambio</div>
+                    </div>
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="{{ url_for('index') }}">Inicio</a></li>
+                        <li><a href="{{ url_for('reportar') }}">Reportar</a></li>
+                        <li><a href="{{ url_for('reportes_mapa') }}">Seguimiento</a></li>
+                        <li><a href="{{ url_for('instructions') }}">Instrucciones</a></li>
+                        {% if current_user.is_authenticated %}
+                            <li class="nav-profile-dropdown">
+                                <a href="#" class="nav-profile-link" id="profileDropdownToggle">
+                                    <div class="nav-profile-picture-container">
+                                        <img src="{{ url_for('static', filename=current_user.profile_image_url) if current_user.profile_image_url else url_for('static', filename='img/default_profile.png') }}" alt="Foto de Perfil" class="nav-profile-picture">
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu" id="profileDropdownMenu">
+                                    <li><a href="{{ url_for('perfil') }}">Mi perfil</a></li>
+                                    <li><a href="#">Mis reportes</a></li>
+                                    <li><a href="{{ url_for('logout') }}">Cerrar Sesión</a></li>
+                                </ul>
+                            </li>
+                        {% else %}
+                            <li><a href="{{ url_for('login') }}">Iniciar Sesion</a></li>
+                            <li><a href="{{ url_for('register') }}">Registrarse</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="instructions-section">
+                <h2>¿Cómo Utilizar ReportaYA?</h2>
+                <p>ReportaYA es una herramienta sencilla para reportar problemas de infraestructura pública en nuestra ciudad. Sigue estos pasos para hacer tu reporte:</p>
+
+                <div class="steps-grid">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <h3>Iniciar Sesión o Registrarse</h3>
+                        <p>Para enviar un reporte, debes iniciar sesión. Si no tienes cuenta, regístrate. Busca "Iniciar Sesión" o "Registrarse" en la barra de navegación.</p>
+                        <div class="step-icon">🚪</div> {# Puedes usar emojis o iconos de tu carpeta icons #}
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <h3>Iniciar un Nuevo Reporte</h3>
+                        <p>Desde la página principal o la navegación, haz clic en el botón "Reportar" para acceder al formulario.</p>
+                        <div class="step-icon">➕</div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <h3>Paso 1: Ubicación</h3>
+                        <p>Ingresa la dirección o usa tu ubicación actual. La precisión es clave para una respuesta rápida. </p>
+                        <div class="step-icon">📍</div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">4</div>
+                        <h3>Paso 2: Adjuntar Fotos</h3>
+                        <p>Sube una o varias fotografías del problema. Esto es opcional, pero ayuda a la comprensión del incidente.</p>
+                        <div class="step-icon">📸</div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">5</div>
+                        <h3>Paso 3: Detalles del Problema</h3>
+                        <p>Selecciona el tipo de problema, escribe una descripción detallada y asigna un nivel de urgencia.</p>
+                        <div class="step-icon">📝</div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">6</div>
+                        <h3>Paso 4: Confirmación y Envío</h3>
+                        <p>Revisa toda la información. Acepta los términos y condiciones, y luego haz clic en "Enviar Reporte".</p>
+                        <div class="step-icon">✅</div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">7</div>
+                        <h3>Seguimiento en el Mapa</h3>
+                        <p>Después de enviar, tu reporte aparecerá en el mapa global. Accede a "Seguimiento" en la barra de navegación para verlo.</p>
+                        <div class="step-icon">🗺️</div>
+                    </div>
+                </div>
+
+                <p class="final-message">¡Gracias por usar ReportaYA y contribuir a mejorar nuestra ciudad!</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; {{ now.year if now else '2023' }} ReportaYA. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleButton = document.getElementById('profileDropdownToggle');
+            const dropdownMenu = document.getElementById('profileDropdownMenu');
+
+            if (toggleButton && dropdownMenu) {
+                toggleButton.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    dropdownMenu.classList.toggle('show');
+                });
+
+                window.addEventListener('click', function(event) {
+                    if (!toggleButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                        dropdownMenu.classList.remove('show');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

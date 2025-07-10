@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nuevo Reporte - ReportaYA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo">R</div>
+                    <div>
+                        <div class="brand-name">ReportaYA</div>
+                        <div class="brand-slogan">Tu ciudad, tu voz, tu cambio</div>
+                    </div>
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="{{ url_for('index') }}">Inicio</a></li>
+                        {# Contenedor para la imagen de perfil y el dropdown #}
+                        {% if current_user.is_authenticated %}
+                            <li class="nav-profile-dropdown">
+                                <a href="#" class="nav-profile-link" id="profileDropdownToggle">
+                                    <div class="nav-profile-picture-container">
+                                        {# Muestra la imagen de perfil del usuario o una por defecto #}
+                                        <img src="{{ url_for('static', filename=current_user.profile_image_url) if current_user.profile_image_url else url_for('static', filename='img/default_profile.png') }}" alt="Foto de Perfil" class="nav-profile-picture">
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu" id="profileDropdownMenu">
+                                    <li><a href="{{ url_for('perfil') }}">Mi perfil</a></li>
+                                    <li><a href="#">Mis reportes</a></li> {# Placeholder para futura ruta de reportes del usuario #}
+                                    <li><a href="{{ url_for('logout') }}">Cerrar Sesión</a></li>
+                                </ul>
+                            </li>
+                        {% else %}
+                            <li><a href="{{ url_for('login') }}">Login</a></li>
+                            <li><a href="{{ url_for('register') }}">Registrarse</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            {# Mensajes Flash #}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <ul class="flash-messages">
+                        {% for category, message in messages %}
+                            <li class="{{ category }}">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+
+            <div class="form-container multi-step-form">
+                <h2>ReportaYA - Nuevo Reporte</h2>
+                <div class="step-indicator">
+                    <span class="step-dot {% if report_data.step == 1 %}active{% endif %}">1</span>
+                    <span class="step-dot {% if report_data.step == 2 %}active{% endif %}">2</span>
+                    <span class="step-dot {% if report_data.step == 3 %}active{% endif %}">3</span>
+                    <span class="step-dot {% if report_data.step == 4 %}active{% endif %}">4</span>
+                </div>
+
+                <form id="reportForm" method="POST" action="{{ url_for('reportar') }}" enctype="multipart/form-data" novalidate>
+                    <input type="hidden" name="current_step" id="current_step_input" value="{{ report_data.step }}">
+
+                    {# PASO 1: Ubicación #}
+                    <div class="step-content {% if report_data.step == 1 %}active-step{% endif %}" id="step1">
+                        <h3>Paso 1 de 4: Ubicación del Problema</h3>
+                        <div class="form-group">
+                            <label for="location_text">Dirección detectada:</label>
+                            <input type="text" id="location_text" name="location_text" placeholder="Av. Presidente Ibáñez #123, Pto Montt" value="{{ report_data.location_text }}">
+                            <input type="hidden" id="latitude" name="latitude" value="{{ report_data.latitude }}">
+                            <input type="hidden" id="longitude" name="longitude" value="{{ report_data.longitude }}">
+                        </div>
+                        <div class="location-buttons">
+                            <button type="button" id="get_location_button" class="get-location-button">📍 Usar mi ubicación actual</button>
+                        </div>
+                        <div class="form-navigation">
+                            <button type="submit" name="action" value="next" class="cta-button">Continuar &rarr;</button>
+                        </div>
+                    </div>
+
+                    {# PASO 2: Evidencia Fotográfica #}
+                    <div class="step-content {% if report_data.step == 2 %}active-step{% endif %}" id="step2">
+                        <h3>Paso 2 de 4: Evidencia Fotográfica</h3>
+                        <div class="image-upload-area" id="imageUploadArea">
+                            <p>Arrastra tu foto aquí o haz clic para subir</p>
+                            <input type="file" id="image_upload_input" name="images" accept="image/*" multiple style="display: none;">
+                        </div>
+                        <div class="image-previews" id="imagePreviews">
+                            {# Muestra las imágenes ya subidas en esta sesión #}
+                            {% for filename in report_data.image_filenames %}
+                                <div class="image-preview-item">
+                                    <img src="{{ url_for('static', filename='uploads/' + filename) }}" alt="Preview" class="uploaded-image-thumbnail">
+                                    <span class="remove-image" data-filename="{{ filename }}">&times;</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="form-navigation">
+                            <button type="submit" name="action" value="prev" class="secondary-button">&larr; Volver</button>
+                            <button type="submit" name="action" value="next" class="cta-button">Continuar &rarr;</button>
+                        </div>
+                    </div>
+
+                    {# PASO 3: Detalles del Problema #}
+                    <div class="step-content {% if report_data.step == 3 %}active-step{% endif %}" id="step3">
+                        <h3>Paso 3 de 4: Detalles del Problema</h3>
+                        <div class="form-group problem-types">
+                            <label>Tipo de Problema:</label>
+                            <div class="type-options">
+                                <label><input type="radio" name="report_type" value="Bache" {% if report_data.report_type == 'Bache' %}checked{% endif %}> <span>🚧🚗 Bache</span></label>
+                                <label><input type="radio" name="report_type" value="Alumbrado Público" {% if report_data.report_type == 'Alumbrado Público' %}checked{% endif %}> <span>💡 Alumbrado Dañado</span></label>
+                                <label><input type="radio" name="report_type" value="Basura" {% if report_data.report_type == 'Basura' %}checked{% endif %}> <span>🗑️ Basura</span></label>
+                                <label><input type="radio" name="report_type" value="Semáforo" {% if report_data.report_type == 'Semáforo' %}checked{% endif %}> <span>🚦 Semáforo Dañado</span></label>
+                                <label><input type="radio" name="report_type" value="Señalización" {% if report_data.report_type == 'Señalización' %}checked{% endif %}> <span>⚠️ Señalización Vial Dañada</span></label>
+                                <label><input type="radio" name="report_type" value="Árbol" {% if report_data.report_type == 'Árbol' %}checked{% endif %}> <span>🌳 Árbol Caído/Peligroso</span></label>
+                                <label><input type="radio" name="report_type" value="Agua" {% if report_data.report_type == 'Agua' %}checked{% endif %}> <span>💧 Fuga de Agua</span></label>
+                                <label><input type="radio" name="report_type" value="Aceras" {% if report_data.report_type == 'Aceras' %}checked{% endif %}> <span>🧱 Aceras Dañadas</span></label>
+                                <label><input type="radio" name="report_type" value="Otros" {% if report_data.report_type == 'Otros' %}checked{% endif %}> <span>❓ Otro</span></label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="description">Descripción del Problema:</label>
+                            <textarea id="description" name="description" rows="5" placeholder="Describe el problema en detalle..." required>{{ report_data.description }}</textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Nivel de Urgencia:</label>
+                            <div class="urgency-options">
+                                <label><input type="radio" name="urgency_level" value="Baja" {% if report_data.urgency_level == 'Baja' %}checked{% endif %}> Baja - No urgente</label>
+                                <label><input type="radio" name="urgency_level" value="Media" {% if report_data.urgency_level == 'Media' %}checked{% endif %}> Media - Requiere atención</label>
+                                <label><input type="radio" name="urgency_level" value="Alta" {% if report_data.urgency_level == 'Alta' %}checked{% endif %}> Alta - Peligro inmediato</label>
+                            </div>
+                        </div>
+                        <div class="form-navigation">
+                            <button type="submit" name="action" value="prev" class="secondary-button">&larr; Volver</button>
+                            <button type="submit" name="action" value="next" class="cta-button">Continuar &rarr;</button>
+                        </div>
+                    </div>
+
+                    {# PASO 4: Confirmación y Envío #}
+                    <div class="step-content {% if report_data.step == 4 %}active-step{% endif %}" id="step4">
+                        <h3>Paso 4 de 4: Confirmar y Enviar</h3>
+                        <div class="report-summary">
+                            <h4>Resumen de tu reporte:</h4>
+                            <p>📍 <strong>Ubicación:</strong> {{ report_data.location_text if report_data.location_text else 'No especificada' }}</p>
+                            <p>🚧 <strong>Tipo de Problema:</strong> {{ report_data.report_type }}</p>
+                            <p>📝 <strong>Descripción:</strong> {{ report_data.description }}</p>
+                            <p>⚠️ <strong>Urgencia:</strong> {{ report_data.urgency_level }}</p>
+                            {% if report_data.image_filenames %}
+                                <p>📸 <strong>Imágenes:</strong></p>
+                                <div class="summary-image-previews">
+                                    {% for filename in report_data.image_filenames %}
+                                        <img src="{{ url_for('static', filename='uploads/' + filename) }}" alt="Miniatura" class="summary-thumbnail">
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group notification-options">
+                            <label>¿Deseas recibir notificaciones?</label>
+                            <label><input type="checkbox" name="notification_email" value="true" checked> Por email</label>
+                            <label><input type="checkbox" name="notification_web" value="true" checked> En la página web</label>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email_optional">Email (Opcional, para notificaciones):</label>
+                            <input type="email" id="email_optional" name="email_optional" placeholder="tu@email.com" value="{{ report_data.reporter_email }}">
+                        </div>
+
+                        <div class="form-group terms-checkbox">
+                            <label>
+                                <input type="checkbox" name="accept_terms" required> Acepto <a href="#" target="_blank">términos y condiciones</a>
+                            </label>
+                        </div>
+
+                        <div class="form-navigation">
+                            <button type="submit" name="action" value="prev" class="secondary-button">&larr; Volver</button>
+                            <button type="submit" name="action" value="submit" class="cta-button">🚀 ENVIAR REPORTE</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleButton = document.getElementById('profileDropdownToggle');
+            const dropdownMenu = document.getElementById('profileDropdownMenu');
+
+            if (toggleButton && dropdownMenu) {
+                toggleButton.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    dropdownMenu.classList.toggle('show');
+                });
+
+                window.addEventListener('click', function(event) {
+                    if (!toggleButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                        dropdownMenu.classList.remove('show');
+                    }
+                });
+            }
+
+            const getLocationButton = document.getElementById('get_location_button');
+            const locationTextInput = document.getElementById('location_text');
+            const latitudeInput = document.getElementById('latitude');
+            const longitudeInput = document.getElementById('longitude');
+            const reportForm = document.getElementById('reportForm'); 
+            const currentStepInput = document.getElementById('current_step_input'); 
+
+          
+            async function geocodeAddress(address) {
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`);
+                    const data = await response.json();
+                    if (data && data.length > 0) {
+                        const result = data[0];
+                        return { lat: result.lat, lon: result.lon, display_name: result.display_name };
+                    }
+                } catch (error) {
+                    console.error('Error al geocodificar la dirección:', error);
+                }
+                return null;
+            }
+
+            if (getLocationButton) {
+                getLocationButton.addEventListener('click', function() {
+                    if (navigator.geolocation) {
+                        getLocationButton.textContent = 'Obteniendo ubicación...';
+                        getLocationButton.disabled = true;
+                        navigator.geolocation.getCurrentPosition(
+                            async (position) => {
+                                const lat = position.coords.latitude;
+                                const lon = position.coords.longitude;
+                                latitudeInput.value = lat;
+                                longitudeInput.value = lon;
+
+                                try {
+                                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`);
+                                    const data = await response.json();
+                                    if (data && data.display_name) {
+                                        locationTextInput.value = data.display_name;
+                                    } else {
+                                        locationTextInput.value = `Lat: ${lat}, Lon: ${lon}`;
+                                    }
+                                } catch (error) {
+                                    console.error('Error al obtener la dirección inversa:', error);
+                                    locationTextInput.value = `Lat: ${lat}, Lon: ${lon}`;
+                                } finally {
+                                    getLocationButton.textContent = '📍 Ubicación Obtenida';
+                                    getLocationButton.disabled = false;
+                                    console.log('DEBUG (JS): Geolocalización obtenida.');
+                                    console.log('DEBUG (JS): location_text.value:', locationTextInput.value);
+                                    console.log('DEBUG (JS): latitude.value:', latitudeInput.value);
+                                    console.log('DEBUG (JS): longitude.value:', longitudeInput.value);
+                                }
+                            },
+                            (error) => {
+                                console.error('Error al obtener la geolocalización:', error);
+                                locationTextInput.value = 'No se pudo obtener la ubicación automáticamente.';
+                                alert('No se pudo obtener tu ubicación. Por favor, asegúrate de que la geolocalización esté permitida en tu navegador o ingresa la dirección manualmente.');
+                                getLocationButton.textContent = '📍 Obtener Ubicación';
+                                getLocationButton.disabled = false;
+                                console.log('DEBUG (JS): Error en geolocalización.');
+                            },
+                            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                        );
+                    } else {
+                        alert('Tu navegador no soporta la geolocalización. Por favor, ingresa la dirección manualmente.');
+                        locationTextInput.value = ''; 
+                        console.log('DEBUG (JS): Geolocalización no soportada por el navegador.');
+                    }
+                });
+            }
+
+            if (reportForm) {
+                reportForm.addEventListener('submit', async function(event) {
+                   
+                    if (currentStepInput.value === '1' && event.submitter && event.submitter.value === 'next') {
+                    
+                        if (latitudeInput.value && longitudeInput.value) {
+                            console.log('DEBUG (JS): Latitud y longitud ya presentes, avanzando.');
+                            return; 
+                        }
+
+                      
+                        const manualAddress = locationTextInput.value.trim();
+                        if (manualAddress) {
+                            event.preventDefault(); 
+
+                            console.log('DEBUG (JS): Intentando geocodificar dirección manual:', manualAddress);
+                            const geocodeResult = await geocodeAddress(manualAddress);
+
+                            if (geocodeResult) {
+                                latitudeInput.value = geocodeResult.lat;
+                                longitudeInput.value = geocodeResult.lon;
+                                locationTextInput.value = geocodeResult.display_name;
+                                console.log('DEBUG (JS): Dirección geocodificada exitosamente:', geocodeResult);
+
+
+                                const tempSubmitter = document.createElement('input');
+                                tempSubmitter.type = 'hidden';
+                                tempSubmitter.name = 'action';
+                                tempSubmitter.value = 'next';
+                                reportForm.appendChild(tempSubmitter);
+                                reportForm.submit();
+                            } else {
+                                alert('No se pudo encontrar una ubicación válida para la dirección ingresada. Por favor, sé más específico o usa la ubicación actual.');
+
+                                console.log('DEBUG (JS): No se pudo geocodificar la dirección manual.');
+                            }
+                        } else {
+                            event.preventDefault();
+                            alert('Por favor, ingresa una dirección o usa tu ubicación actual.');
+                            console.log('DEBUG (JS): Campo de dirección vacío.');
+                        }
+                    }
+                    console.log('DEBUG (JS): Formulario a punto de ser enviado.');
+                    console.log('DEBUG (JS): Valor de location_text:', locationTextInput.value);
+                    console.log('DEBUG (JS): Valor de latitude:', latitudeInput.value);
+                    console.log('DEBUG (JS): Valor de longitude:', longitudeInput.value);
+                    console.log('DEBUG (JS): current_step_input:', currentStepInput.value);
+                    console.log('DEBUG (JS): action (del botón submit):', event.submitter ? event.submitter.value : 'N/A');
+                });
+            }
+
+
+            const imageUploadArea = document.getElementById('imageUploadArea');
+            const imageUploadInput = document.getElementById('image_upload_input');
+            const imagePreviewsContainer = document.getElementById('imagePreviews');
+
+            if (imageUploadArea && imageUploadInput && imagePreviewsContainer) {
+                imageUploadArea.addEventListener('click', () => {
+                    imageUploadInput.click();
+                });
+
+
+                imageUploadInput.addEventListener('change', () => {
+                    if (imageUploadInput.files.length > 0) {
+                        const form = document.getElementById('reportForm');
+                        const hiddenStepInput = document.getElementById('current_step_input');
+                        hiddenStepInput.value = 2; 
+                        const actionInput = document.createElement('input');
+                        actionInput.type = 'hidden';
+                        actionInput.name = 'action';
+                        actionInput.value = 'upload_image';
+                        form.appendChild(actionInput);
+                        form.submit();
+                    }
+                });
+
+                imageUploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    imageUploadArea.classList.add('drag-over');
+                });
+
+                imageUploadArea.addEventListener('dragleave', (e) => {
+                    imageUploadArea.classList.remove('drag-over');
+                });
+
+                imageUploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    imageUploadArea.classList.remove('drag-over');
+                    if (e.dataTransfer.files.length > 0) {
+                        imageUploadInput.files = e.dataTransfer.files; 
+                        const form = document.getElementById('reportForm');
+                        const hiddenStepInput = document.getElementById('current_step_input');
+                        hiddenStepInput.value = 2;
+                        const actionInput = document.createElement('input');
+                        actionInput.type = 'hidden';
+                        actionInput.name = 'action';
+
+                        actionInput.value = 'upload_image';
+                        form.appendChild(actionInput);
+                        form.submit();
+                    }
+                });
+
+                imagePreviewsContainer.addEventListener('click', async (e) => {
+                    if (e.target.classList.contains('remove-image')) {
+                        const filenameToRemove = e.target.dataset.filename;
+                        if (confirm(`¿Estás seguro de que quieres eliminar la imagen ${filenameToRemove}?`)) {
+                            try {
+                           
+                                const response = await fetch('/remove_uploaded_image', { 
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({ filename: filenameToRemove })
+                                });
+                                const result = await response.json();
+                                if (result.success) {
+                                    e.target.closest('.image-preview-item').remove(); 
+                                    alert('Imagen eliminada correctamente.');       
+                                } else {
+                                    alert('Error al eliminar la imagen: ' + (result.message || 'Error desconocido.'));
+                                }
+                            } catch (error) {
+                                console.error('Error de red al intentar eliminar la imagen:', error);
+                                alert('No se pudo comunicar con el servidor para eliminar la imagen.');
+                            }
+                        }
+                    }
+                });
+            }
+
+        });
+    </script>
+</body>
+</html>

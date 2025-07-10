@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes en Mapa - ReportaYA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        #map {
+            height: 600px; 
+            width: 100%;
+            margin-top: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        
+        main .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .nav-profile-dropdown {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .nav-profile-picture-container {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #eee; 
+        }
+
+        .nav-profile-picture {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: #fff;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            z-index: 1000;
+            min-width: 160px;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px; 
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-menu li {
+            list-style: none; 
+            padding: 0;
+            margin: 0;
+        }
+
+        .dropdown-menu li a {
+            color: #333;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            text-align: left;
+        }
+
+        .dropdown-menu li a:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo">R</div>
+                    <div>
+                        <div class="brand-name">ReportaYA</div>
+                        <div class="brand-slogan">Tu ciudad, tu voz, tu cambio</div>
+                    </div>
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="{{ url_for('index') }}">Inicio</a></li>
+                        {# Contenedor para la imagen de perfil y el dropdown #}
+                        {% if current_user.is_authenticated %}
+                            <li class="nav-profile-dropdown">
+                                <a href="#" class="nav-profile-link" id="profileDropdownToggle">
+                                    <div class="nav-profile-picture-container">
+                                        {# Muestra la imagen de perfil del usuario o una por defecto #}
+                                        <img src="{{ url_for('static', filename=current_user.profile_image_url) if current_user.profile_image_url else url_for('static', filename='img/default_profile.png') }}" alt="Foto de Perfil" class="nav-profile-picture">
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu" id="profileDropdownMenu">
+                                    <li><a href="{{ url_for('perfil') }}">Mi perfil</a></li>
+                                    <li><a href="#">Mis reportes</a></li> {# Placeholder para futura ruta de reportes del usuario #}
+                                    <li><a href="{{ url_for('logout') }}">Cerrar Sesión</a></li>
+                                </ul>
+                            </li>
+                        {% else %}
+                            <li><a href="{{ url_for('login') }}">Login</a></li>
+                            <li><a href="{{ url_for('register') }}">Registrarse</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <h2>Reportes Ciudadanos en el Mapa</h2>
+            <div id="map"></div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleButton = document.getElementById('profileDropdownToggle');
+            const dropdownMenu = document.getElementById('profileDropdownMenu');
+
+            if (toggleButton && dropdownMenu) {
+                toggleButton.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    dropdownMenu.classList.toggle('show');
+                });
+
+                window.addEventListener('click', function(event) {
+                    if (!toggleButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                        dropdownMenu.classList.remove('show');
+                    }
+                });
+            }
+
+         
+            const initialLat = -41.4697;
+            const initialLon = -72.9354;
+            const initialZoom = 13;
+
+            const map = L.map('map').setView([initialLat, initialLon], initialZoom);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+           
+            const iconMapping = {
+                'Bache': '{{ url_for("static", filename="img/icons/bache.png") }}',
+                'Alumbrado Público': '{{ url_for("static", filename="img/icons/alumbrado.png") }}',
+                'Basura': '{{ url_for("static", filename="img/icons/basura.png") }}',
+                'Semáforo': '{{ url_for("static", filename="img/icons/semaforo.png") }}',
+                'Señalización': '{{ url_for("static", filename="img/icons/senalizacion.png") }}',
+                'Árbol Caído': '{{ url_for("static", filename="img/icons/arbol_caido.png") }}',
+                'Fuga de Agua': '{{ url_for("static", filename="img/icons/fuga_agua.png") }}',
+                'Acera Dañada': '{{ url_for("static", filename="img/icons/acera_dañada.png") }}',
+                'Otros': '{{ url_for("static", filename="img/icons/otro.png") }}'
+            };
+
+            const defaultIconUrl = '{{ url_for("static", filename="img/icons/marker.png") }}'; 
+
+       
+            function createCustomIcon(iconUrl) {
+                return L.icon({
+                    iconUrl: iconUrl,
+                    iconSize: [32, 32],    
+                    iconAnchor: [16, 32],  
+                    popupAnchor: [0, -32]  
+                });
+            }
+
+            fetch('/api/reportes')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(reportes => {
+                    if (reportes.length > 0) {
+                        reportes.forEach(report => {
+                            if (typeof report.latitude === 'number' && typeof report.longitude === 'number') {
+                                const iconUrl = iconMapping[report.report_type] || defaultIconUrl;
+                                const customIcon = createCustomIcon(iconUrl);
+
+                                const marker = L.marker([report.latitude, report.longitude], { icon: customIcon }).addTo(map);
+
+                                let popupContent = `
+                                    <strong>Tipo:</strong> ${report.report_type}<br>
+                                    <strong>Dirección:</strong> ${report.location_text || 'No especificada'}<br>
+                                    <strong>Descripción:</strong> ${report.description}<br>
+                                    <strong>Urgencia:</strong> ${report.urgency_level}<br>
+                                `;
+                                if (report.image_filenames && report.image_filenames.length > 0) {
+                                    const firstImage = report.image_filenames[0];
+                                    popupContent += `<br><img src="{{ url_for('static', filename='uploads/') }}${firstImage}" alt="Evidencia" style="max-width: 150px; height: auto; border-radius: 5px;">`;
+                                }
+                                popupContent += `<br><small>Reportado el: ${new Date(report.timestamp).toLocaleString()}</small>`;
+
+                                marker.bindPopup(popupContent);
+                            } else {
+                                console.warn(`Reporte con ID ${report.id} tiene latitud o longitud inválida: Lat=${report.latitude}, Lon=${report.longitude}`);
+                            }
+                        });
+
+                        const validMarkers = reportes.filter(report => typeof report.latitude === 'number' && typeof report.longitude === 'number')
+                                                      .map(report => L.marker([report.latitude, report.longitude]));
+
+                        if (validMarkers.length > 0) {
+                            const group = new L.featureGroup(validMarkers);
+                            map.fitBounds(group.getBounds(), { padding: [50, 50] }); 
+                        }
+
+                    } else {
+                        console.log('No hay reportes para mostrar en el mapa.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al obtener los reportes:', error);
+                    alert('No se pudieron cargar los reportes en el mapa. Inténtalo de nuevo más tarde.');
+                });
+        });
+    </script>
+</body>
+</html>
