@@ -981,7 +981,7 @@ main {
 
     .step-number {
         position: static; /* Quita el posicionamiento absoluto para fluir con el contenido */
-        margin: 0 auto 15px auto; /* Centra el número y añade margen inferior */
+        margin: 0 auto 15px auto; /* Centra el número y añade margen inferior a a a a*/ 
     }
 
     .step-card h3 {
