@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Términos y Condiciones de Uso - ReportaYA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4; 
+        }
+        .container-terms {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .container-terms h1, .container-terms h2 {
+            color: #007bff;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .container-terms h2 {
+            font-size: 1.8em;
+            margin-top: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .container-terms p, .container-terms ul {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        .container-terms ul {
+            list-style-type: disc;
+            margin-left: 20px;
+        }
+        .container-terms ul li {
+            margin-bottom: 8px;
+        }
+        .date-updated {
+            text-align: right;
+            font-style: italic;
+            color: #777;
+            margin-bottom: 20px;
+        }
+        header {
+            background-color: #4A465B;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+            background-image: linear-gradient(to right, #4A465B, #6A5B80)
+        }
+        header .brand-name {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        header .brand-slogan {
+            font-size: 0.8em;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo">R</div>
+                    <div>
+                        <div class="brand-name">ReportaYA</div>
+                        <div class="brand-slogan">Tu ciudad, tu voz, tu cambio</div>
+                    </div>
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="{{ url_for('index') }}">Inicio</a></li>
+                        <li><a href="{{ url_for('reportar') }}">Reportar</a></li>
+                        <li><a href="{{ url_for('reportes_mapa') }}">Seguimiento</a></li>
+                        <li><a href="{{ url_for('instructions') }}">Instrucciones</a></li>
+                        <li class="nav-profile-dropdown">
+                            <a href="#" class="nav-profile-link" id="profileDropdownToggle">
+                                <div class="nav-profile-picture-container">
+                                    <img src="{{ url_for('static', filename=current_user.profile_image_url) if current_user.is_authenticated and current_user.profile_image_url else url_for('static', filename='img/default_profile.png') }}" alt="Foto de Perfil" class="nav-profile-picture">
+                                </div>
+                            </a>
+                            <ul class="dropdown-menu" id="profileDropdownMenu">
+                                {% if current_user.is_authenticated %}
+                                <li><a href="{{ url_for('perfil') }}">Mi perfil</a></li>
+                                <li><a href="{{ url_for('mis_reportes') }}">Mis reportes</a></li>
+                                <li><a href="{{ url_for('logout') }}">Cerrar Sesión</a></li>
+                                {% else %}
+                                <li><a href="{{ url_for('login') }}">Iniciar Sesión</a></li>
+                                <li><a href="{{ url_for('register') }}">Registrarse</a></li>
+                                {% endif %}
+                            </ul>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container-terms">
+            <h1>Términos y Condiciones de Uso de ReportaYA</h1>
+            <p class="date-updated">Fecha de última actualización: 14 de Julio de 2025</p>
+
+            <p>Bienvenido/a a ReportaYA , un servicio operado por SIGIP , diseñado para conectar a los ciudadanos con las autoridades municipales para reportar problemas de infraestructura pública de manera rápida y eficiente.</p>
+
+            <p>Al acceder y utilizar nuestra Plataforma, usted acepta estar legalmente vinculado/a por los presentes Términos y Condiciones de Uso ("Términos"). Si no está de acuerdo con alguno de estos Términos, por favor, no utilice la Plataforma.</p>
+
+            <h2>1. Aceptación de los Términos</h2>
+            <p>Estos Términos constituyen un acuerdo legal vinculante entre usted, el usuario, y SIGIP . Nos reservamos el derecho de modificar estos Términos en cualquier momento. La continuación del uso de la Plataforma después de la publicación de cambios implicará su aceptación de dichos cambios.</p>
+
+            <h2>2. Descripción del Servicio</h2>
+            <p>ReportaYA permite a los usuarios registrarse, reportar incidentes relacionados con la infraestructura pública (como árboles caídos, problemas de vialidad, luminarias, etc.) proporcionando una descripción, nivel de urgencia, ubicación geográfica (mediante geolocalización o texto) y, opcionalmente, subir imágenes y su información de contacto. La Plataforma también ofrece seguimiento de reportes y un sistema de reputación para los usuarios basado en la cantidad de reportes enviados.</p>
+
+            <h2>3. Registro de Cuenta y Uso del Servicio</h2>
+            <ul>
+                <li><strong>Creación de Cuenta:</strong> Para utilizar plenamente las funcionalidades de ReportaYA, deberá registrar una cuenta proporcionando un correo electrónico y una contraseña. Es su responsabilidad mantener la confidencialidad de sus credenciales.</li>
+                <li><strong>Información del Perfil:</strong> Puede actualizar su nombre, apellido, número de teléfono e imagen de perfil.</li>
+                <li><strong>Veracidad de la Información:</strong> Usted se compromete a proporcionar información verdadera, precisa, actual y completa al registrarse y utilizar la Plataforma.</li>
+                <li><strong>Conducta del Usuario:</strong> Usted acepta utilizar la Plataforma solo para fines lícitos y de manera que no infrinja los derechos de, ni restrinja o inhiba el uso y disfrute de la Plataforma por parte de terceros.</li>
+            </ul>
+
+            <h2>4. Contenido del Usuario (Reportes)</h2>
+            <ul>
+                <li><strong>Responsabilidad del Contenido:</strong> Usted es el único responsable del contenido (texto, imágenes y ubicación) que suba al reportar un incidente.</li>
+                <li><strong>Contenido Apropiado:</strong> Usted se compromete a no enviar ningún contenido que sea:
+                    <ul>
+                        <li>Falso, inexacto o engañoso.</li>
+                        <li>Difamatorio, ofensivo, abusivo, obsceno, odioso o incendiario.</li>
+                        <li>Que incite a la violencia o al odio.</li>
+                        <li>Que infrinja derechos de autor, marcas registradas u otros derechos de propiedad intelectual de terceros.</li>
+                        <li>Que contenga información personal de terceros sin su consentimiento explícito.</li>
+                        <li>Que sea spam o publicidad no solicitada.</li>
+                    </ul>
+                </li>
+                <li><strong>Licencia de Contenido:</strong> Al subir contenido a ReportaYA, usted nos otorga una licencia mundial, no exclusiva, libre de regalías, sublicenciable y transferible para usar, reproducir, distribuir, preparar trabajos derivados de, display y ejecutar el contenido en relación con el servicio ofrecido por la Plataforma y a través de cualquier medio. Esto incluye compartir el reporte con las autoridades municipales pertinentes para su gestión.</li>
+                <li><strong>Moderación:</strong> Nos reservamos el derecho, pero no la obligación, de monitorear, editar o eliminar cualquier contenido que consideremos, a nuestra entera discreción, que viole estos Términos o que sea objetable.</li>
+            </ul>
+
+            <h2>5. Sistema de Reputación</h2>
+            <p>ReportaYA incluye un sistema de reputación que asigna estrellas a los usuarios en función del número de reportes enviados. Este sistema es meramente indicativo de la actividad del usuario en la Plataforma y no implica una garantía sobre la calidad o veracidad de los reportes. Los niveles de reputación incluyen "Necesita Reportes", "Principiante", "Participante Activo", "Colaborador Destacado", "Ciudadano Ejemplar" y "Héroe Local".</p>
+
+            <h2>6. Privacidad y Datos Personales</h2>
+            <p>La recopilación y el uso de su información personal se rigen por nuestra Política de Privacidad, que forma parte integral de estos Términos. Al utilizar ReportaYA, usted acepta las prácticas de datos descritas en la Política de Privacidad. Su correo electrónico puede ser usado para notificaciones relacionadas con sus reportes.</p>
+
+            <h2>7. Limitación de Responsabilidad</h2>
+            <ul>
+                <li>ReportaYA es una herramienta para facilitar la comunicación entre ciudadanos y autoridades. No garantizamos la respuesta, el tiempo de respuesta o la resolución de los problemas reportados por parte de las autoridades municipales.</li>
+                <li>No somos responsables de ningún daño directo, indirecto, incidental, especial, consecuente o punitivo que surja del uso o la imposibilidad de usar la Plataforma.</li>
+                <li>Nos esforzamos por mantener la Plataforma disponible y segura, pero no garantizamos que estará libre de errores o interrupciones.</li>
+            </ul>
+
+            <h2>8. Enlaces a Sitios de Terceros</h2>
+            <p>La Plataforma puede contener enlaces a otros sitios web ("Sitios Enlazados"). Los Sitios Enlazados no están bajo nuestro control y no somos responsables de los contenidos de ningún Sitio Enlazado.</p>
+
+            <h2>9. Modificación y Terminación del Servicio</h2>
+            <p>Nos reservamos el derecho de modificar o discontinuar el servicio (o cualquier parte del mismo) con o sin previo aviso en cualquier momento. También podemos terminar o suspender su acceso a la Plataforma inmediatamente, sin previo aviso o responsabilidad, por cualquier motivo, incluyendo sin limitación, si usted incumple los Términos.</p>
+
+            <h2>10. Ley Aplicable y Jurisdicción</h2>
+            <p>Estos Términos se regirán e interpretarán de acuerdo con las leyes de la República de Chile (asumiendo que la aplicación operará en Chile, específicamente en Puerto Montt, Región de Los Lagos). Cualquier disputa que surja de o en relación con estos Términos será sometida a la jurisdicción exclusiva de los tribunales competentes de Puerto Montt, Chile.</p>
+
+            <h2>11. Contacto</h2>
+            <p>Si tiene preguntas sobre estos Términos, por favor contáctenos a sigip.reportaya@gmail.com .</p>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleButton = document.getElementById('profileDropdownToggle');
+            const dropdownMenu = document.getElementById('profileDropdownMenu');
+
+            if (toggleButton && dropdownMenu) {
+                toggleButton.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    dropdownMenu.classList.toggle('show');
+                });
+
+                window.addEventListener('click', function(event) {
+                    if (!toggleButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                        dropdownMenu.classList.remove('show');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

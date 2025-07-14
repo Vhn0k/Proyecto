@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Reportes - ReportaYA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .reports-container {
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 30px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .reports-container h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .reports-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .reports-table th, .reports-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .reports-table th {
+            background-color: #f2f2f2;
+            color: #555;
+            font-weight: bold;
+        }
+        .reports-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .reports-table tr:hover {
+            background-color: #f1f1f1;
+        }
+        .no-reports {
+            text-align: center;
+            padding: 40px;
+            color: #777;
+            font-style: italic;
+        }
+        .report-description {
+            max-height: 60px; 
+            overflow: hidden;
+            text-overflow: ellipsis; 
+            display: -webkit-box;
+            -webkit-line-clamp: 3; 
+            -webkit-box-orient: vertical;
+        }
+        .report-image-preview {
+            max-width: 100px;
+            max-height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .report-image-link {
+            display: inline-block;
+            margin-top: 5px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        .report-image-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo">R</div>
+                    <div>
+                        <div class="brand-name">ReportaYA</div>
+                        <div class="brand-slogan">Tu ciudad, tu voz, tu cambio</div>
+                    </div>
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="{{ url_for('index') }}">Inicio</a></li>
+                        {# Contenedor para la imagen de perfil y el dropdown #}
+                        <li class="nav-profile-dropdown">
+                            <a href="#" class="nav-profile-link" id="profileDropdownToggle">
+                                <div class="nav-profile-picture-container">
+                                    <img src="{{ url_for('static', filename=current_user.profile_image_url) if current_user.profile_image_url else url_for('static', filename='img/default_profile.png') }}" alt="Foto de Perfil" class="nav-profile-picture">
+                                </div>
+                            </a>
+                            <ul class="dropdown-menu" id="profileDropdownMenu">
+                                <li><a href="{{ url_for('perfil') }}">Mi perfil</a></li>
+                                <li><a href="{{ url_for('mis_reportes') }}">Mis reportes</a></li>
+                                <li><a href="{{ url_for('logout') }}">Cerrar Sesión</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            {# Mensajes Flash #}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <ul class="flash-messages">
+                        {% for category, message in messages %}
+                            <li class="{{ category }}">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+
+            <div class="reports-container">
+                <h2>Mis Reportes</h2>
+
+                {% if reportes %}
+                    <table class="reports-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tipo</th>
+                                <th>Ubicación</th>
+                                <th>Descripción</th>
+                                <th>Urgencia</th>
+                                <th>Fecha</th>
+                                <th>Imagen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for report in reportes %}
+                                <tr>
+                                    <td>{{ report.id }}</td>
+                                    <td>{{ report.report_type }}</td>
+                                    <td>{{ report.location_text }}</td>
+                                    <td><div class="report-description">{{ report.description }}</div></td>
+                                    <td>{{ report.urgency_level }}</td>
+                                    <td>{{ report.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        {% if report.image_filenames %}
+                                            {% set images = report.image_filenames | from_json %}
+                                            {% if images and images[0] %} {# CORRECCIÓN: Acceso directo al primer elemento sin 'break' #}
+                                                <img src="{{ url_for('static', filename='uploads/' + images[0]) }}" alt="Reporte Imagen" class="report-image-preview">
+                                                {% if images | length > 1 %}
+                                                    <a href="#" class="report-image-link" onclick="alert('Este reporte tiene {{ images | length }} imágenes. Función para ver más no implementada aún.')">Ver más</a>
+                                                {% endif %}
+                                            {% else %}
+                                                No hay imagen
+                                            {% endif %}
+                                        {% else %}
+                                            No hay imagen
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="no-reports">Aún no has enviado ningún reporte.</p>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleButton = document.getElementById('profileDropdownToggle');
+            const dropdownMenu = document.getElementById('profileDropdownMenu');
+
+            if (toggleButton && dropdownMenu) {
+                toggleButton.addEventListener('click', function(event) {
+                    event.preventDefault(); 
+                    dropdownMenu.classList.toggle('show');
+                });
+
+                window.addEventListener('click', function(event) {
+                    if (!toggleButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                        dropdownMenu.classList.remove('show');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

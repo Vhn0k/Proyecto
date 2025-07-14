@@ -29,6 +29,16 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
+# FILTRO PERSONALIZADO PARA JINJA2: Para parsear JSON strings en las plantillas
+@app.template_filter('from_json')
+def from_json_filter(value):
+    if value is None:
+        return []
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError:
+        return []
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -157,26 +167,67 @@ def perfil():
         user.first_name = request.form.get('first_name')
         user.last_name = request.form.get('last_name')
         user.phone = request.form.get('phone')
-        user.about_me = request.form.get('about_me')
-        user.location = request.form.get('location')
+        # user.about_me = request.form.get('about_me') # Eliminado a petición del usuario
+        # user.location = request.form.get('location') # Eliminado a petición del usuario
 
         if 'profile_picture' in request.files:
             file = request.files['profile_picture']
             if file.filename == '':
-                flash('No se seleccionó ningún archivo para subir.', 'warning')
+                # Si el usuario abrió el diálogo de archivo pero no seleccionó nada, no hacemos nada.
+                pass 
             elif file and allowed_file(file.filename):
+                # Si ya tiene una imagen de perfil y no es la por defecto, la eliminamos primero.
+                if user.profile_image_url and 'default_profile.png' not in user.profile_image_url:
+                    old_filename = os.path.basename(user.profile_image_url)
+                    old_filepath = os.path.join(app.config['UPLOAD_FOLDER'], old_filename)
+                    if os.path.exists(old_filepath):
+                        try:
+                            os.remove(old_filepath)
+                            print(f"Antigua imagen eliminada: {old_filepath}") # Para depuración
+                        except Exception as e:
+                            print(f"Error al eliminar antigua imagen {old_filepath}: {e}") # Para depuración
+                            flash(f'Error al eliminar la imagen anterior: {e}', 'warning')
+
                 filename = secure_filename(file.filename)
                 unique_filename = str(uuid.uuid4()) + '_' + filename
                 filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-                file.save(filepath)
-                user.profile_image_url = 'uploads/' + unique_filename
-                flash('Imagen de perfil actualizada.', 'success')
+                
+                try:
+                    file.save(filepath)
+                    user.profile_image_url = 'uploads/' + unique_filename
+                    flash('Imagen de perfil actualizada.', 'success')
+                    print(f"Nueva imagen guardada: {filepath}") # Para depuración
+                except Exception as e:
+                    flash(f'Error al guardar la nueva imagen de perfil: {e}', 'error')
+                    print(f"Error al guardar nueva imagen: {e}") # Para depuración
             else:
                 flash('Tipo de archivo no permitido para la imagen de perfil.', 'error')
         db.session.commit()
         flash('Tu perfil ha sido actualizado correctamente.', 'success')
         return redirect(url_for('perfil'))
-    return render_template('profile.html', user=user)
+
+    # Cálculo de reputación para la página de perfil
+    report_count = user.reports.count()
+    # Cada 5 reportes = 1 estrella. Máximo 5 estrellas (25 reportes).
+    user_stars = min(report_count // 5, 5)
+    
+    # Texto de valoración basado en estrellas
+    if user_stars == 0:
+        rating_text = "Necesita Reportes"
+    elif user_stars == 1:
+        rating_text = "Principiante"
+    elif user_stars == 2:
+        rating_text = "Participante Activo"
+    elif user_stars == 3:
+        rating_text = "Colaborador Destacado"
+    elif user_stars == 4:
+        rating_text = "Ciudadano Ejemplar"
+    elif user_stars == 5:
+        rating_text = "Héroe Local"
+    else:
+        rating_text = "Sin Valoración" # Esto no debería ocurrir si el límite es 5
+
+    return render_template('profile.html', user=user, user_stars=user_stars, rating_text=rating_text)
 
 @app.route('/change_password', methods=['GET', 'POST'])
 @login_required
@@ -397,6 +448,19 @@ def get_reportes():
 def reportes_mapa():
     now = datetime.now()
     return render_template('reportes_mapa.html', now=now)
+
+@app.route('/mis_reportes')
+@login_required
+def mis_reportes():
+    # Obtener todos los reportes donde el user_id coincide con el id del usuario actual
+    user_reports = Report.query.filter_by(user_id=current_user.id).order_by(Report.timestamp.desc()).all()
+    # Pasa los reportes a la plantilla para que se muestren
+    return render_template('my_reports.html', reportes=user_reports)
+
+# Nueva ruta para los Términos y Condiciones
+@app.route('/terminos_y_condiciones')
+def terminos_y_condiciones():
+    return render_template('terms_and_conditions.html') # Asegúrate que el nombre de archivo coincida con el que creaste
 
 if __name__ == '__main__':
     with app.app_context():

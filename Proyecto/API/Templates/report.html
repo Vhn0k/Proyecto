@@ -20,18 +20,21 @@
                 <nav>
                     <ul>
                         <li><a href="{{ url_for('index') }}">Inicio</a></li>
+                        <li><a href="{{ url_for('reportar') }}">Reportar</a></li>
+                        <li><a href="{{ url_for('reportes_mapa') }}">Seguimiento</a></li>
+                        <li><a href="{{ url_for('instructions') }}">Instrucciones</a></li> {# Añadida si no estaba #}
                         {# Contenedor para la imagen de perfil y el dropdown #}
                         {% if current_user.is_authenticated %}
                             <li class="nav-profile-dropdown">
                                 <a href="#" class="nav-profile-link" id="profileDropdownToggle">
                                     <div class="nav-profile-picture-container">
                                         {# Muestra la imagen de perfil del usuario o una por defecto #}
-                                        <img src="{{ url_for('static', filename=current_user.profile_image_url) if current_user.profile_image_url else url_for('static', filename='img/default_profile.png') }}" alt="Foto de Perfil" class="nav-profile-picture">
+                                        <img src="{{ url_for('static', filename=current_user.profile_image_url) if current_user.is_authenticated and current_user.profile_image_url else url_for('static', filename='img/default_profile.png') }}" alt="Foto de Perfil" class="nav-profile-picture">
                                     </div>
                                 </a>
                                 <ul class="dropdown-menu" id="profileDropdownMenu">
                                     <li><a href="{{ url_for('perfil') }}">Mi perfil</a></li>
-                                    <li><a href="#">Mis reportes</a></li> {# Placeholder para futura ruta de reportes del usuario #}
+                                    <li><a href="{{ url_for('mis_reportes') }}">Mis reportes</a></li>
                                     <li><a href="{{ url_for('logout') }}">Cerrar Sesión</a></li>
                                 </ul>
                             </li>
@@ -177,8 +180,9 @@
                         </div>
 
                         <div class="form-group terms-checkbox">
-                            <label>
-                                <input type="checkbox" name="accept_terms" required> Acepto <a href="#" target="_blank">términos y condiciones</a>
+                            <label for="accept_terms">
+                                <input type="checkbox" id="accept_terms" name="accept_terms" value="true" required>
+                                Acepto <a href="{{ url_for('terminos_y_condiciones') }}" target="_blank">términos y condiciones</a>
                             </label>
                         </div>
 
@@ -217,7 +221,7 @@
             const reportForm = document.getElementById('reportForm'); 
             const currentStepInput = document.getElementById('current_step_input'); 
 
-          
+           
             async function geocodeAddress(address) {
                 try {
                     const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`);
@@ -284,18 +288,16 @@
 
             if (reportForm) {
                 reportForm.addEventListener('submit', async function(event) {
-                   
                     if (currentStepInput.value === '1' && event.submitter && event.submitter.value === 'next') {
-                    
                         if (latitudeInput.value && longitudeInput.value) {
                             console.log('DEBUG (JS): Latitud y longitud ya presentes, avanzando.');
-                            return; 
+                            return; // Permite que el formulario se envíe normalmente
                         }
 
-                      
+                        // Si no tenemos latitud y longitud, pero hay una dirección manual, intentamos geocodificarla
                         const manualAddress = locationTextInput.value.trim();
                         if (manualAddress) {
-                            event.preventDefault(); 
+                            event.preventDefault(); // Detenemos el envío del formulario para geocodificar
 
                             console.log('DEBUG (JS): Intentando geocodificar dirección manual:', manualAddress);
                             const geocodeResult = await geocodeAddress(manualAddress);
@@ -303,19 +305,19 @@
                             if (geocodeResult) {
                                 latitudeInput.value = geocodeResult.lat;
                                 longitudeInput.value = geocodeResult.lon;
-                                locationTextInput.value = geocodeResult.display_name;
+                                locationTextInput.value = geocodeResult.display_name; // Actualiza con el nombre "bonito" si existe
                                 console.log('DEBUG (JS): Dirección geocodificada exitosamente:', geocodeResult);
 
-
+                                // Volvemos a enviar el formulario con los datos de lat/lon
                                 const tempSubmitter = document.createElement('input');
                                 tempSubmitter.type = 'hidden';
                                 tempSubmitter.name = 'action';
-                                tempSubmitter.value = 'next';
+                                tempSubmitter.value = 'next'; // O el valor original del botón
                                 reportForm.appendChild(tempSubmitter);
                                 reportForm.submit();
                             } else {
                                 alert('No se pudo encontrar una ubicación válida para la dirección ingresada. Por favor, sé más específico o usa la ubicación actual.');
-
+                                // No enviamos el formulario, el usuario debe corregir
                                 console.log('DEBUG (JS): No se pudo geocodificar la dirección manual.');
                             }
                         } else {
@@ -343,18 +345,18 @@
                     imageUploadInput.click();
                 });
 
-
+                // Este evento se dispara cuando se seleccionan archivos a través del input de tipo file
                 imageUploadInput.addEventListener('change', () => {
                     if (imageUploadInput.files.length > 0) {
                         const form = document.getElementById('reportForm');
                         const hiddenStepInput = document.getElementById('current_step_input');
-                        hiddenStepInput.value = 2; 
+                        hiddenStepInput.value = 2; // Asegura que el paso actual sea 2
                         const actionInput = document.createElement('input');
                         actionInput.type = 'hidden';
                         actionInput.name = 'action';
-                        actionInput.value = 'upload_image';
+                        actionInput.value = 'upload_image'; // Una acción para indicar al backend que es una subida de imagen
                         form.appendChild(actionInput);
-                        form.submit();
+                        form.submit(); // Envía el formulario para procesar la subida de imágenes
                     }
                 });
 
@@ -374,24 +376,30 @@
                         imageUploadInput.files = e.dataTransfer.files; 
                         const form = document.getElementById('reportForm');
                         const hiddenStepInput = document.getElementById('current_step_input');
-                        hiddenStepInput.value = 2;
+                        hiddenStepInput.value = 2; // Asegura que el paso actual sea 2
                         const actionInput = document.createElement('input');
                         actionInput.type = 'hidden';
                         actionInput.name = 'action';
-
-                        actionInput.value = 'upload_image';
+                        // Usamos 'upload_image' para que el backend sepa qué hacer
+                        actionInput.value = 'upload_image'; 
                         form.appendChild(actionInput);
-                        form.submit();
+                        form.submit(); // Envía el formulario para procesar la subida de imágenes
                     }
                 });
 
+                // Manejar la eliminación de imágenes existentes
                 imagePreviewsContainer.addEventListener('click', async (e) => {
                     if (e.target.classList.contains('remove-image')) {
                         const filenameToRemove = e.target.dataset.filename;
                         if (confirm(`¿Estás seguro de que quieres eliminar la imagen ${filenameToRemove}?`)) {
                             try {
-                           
-                                const response = await fetch('/remove_uploaded_image', { 
+                                // Aquí puedes hacer una llamada AJAX para eliminar la imagen del servidor y de la sesión
+                                // Por simplicidad, por ahora solo la eliminaremos visualmente y refrescaremos
+                                // Para una solución completa, necesitarías una ruta en Flask para eliminar la imagen
+                                // y actualizar la sesión del reporte.
+
+                                // **Esto es una simulación / Placeholder. Necesitarías una ruta Flask real para esto.**
+                                const response = await fetch('/remove_uploaded_image', { // Ruta en Flask para eliminar la imagen
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json'
@@ -400,8 +408,10 @@
                                 });
                                 const result = await response.json();
                                 if (result.success) {
-                                    e.target.closest('.image-preview-item').remove(); 
-                                    alert('Imagen eliminada correctamente.');       
+                                    e.target.closest('.image-preview-item').remove(); // Elimina el elemento visual
+                                    alert('Imagen eliminada correctamente.'); // Mensaje de éxito
+                                    // Opcional: recargar la página para reflejar los cambios en la sesión,
+                                    // o actualizar la sesión del lado del cliente si la manejas más profundamente con JS.
                                 } else {
                                     alert('Error al eliminar la imagen: ' + (result.message || 'Error desconocido.'));
                                 }
